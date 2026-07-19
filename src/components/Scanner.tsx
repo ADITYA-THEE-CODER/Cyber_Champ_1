@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Radar, ShieldAlert, ShieldCheck, Loader2, Terminal, Cpu } from 'lucide-react';
+import { Radar, ShieldAlert, ShieldCheck, Loader2, Terminal, Cpu, FileCode, QrCode, Globe } from 'lucide-react';
 
 interface ScanResult {
   threat_level: string;
@@ -8,7 +8,10 @@ interface ScanResult {
   explanation: string;
 }
 
+type ScannerMode = 'url' | 'file' | 'qrcode';
+
 export default function Scanner() {
+  const [mode, setMode] = useState<ScannerMode>('url');
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -22,11 +25,16 @@ export default function Scanner() {
     setError(null);
     setResult(null);
 
+    // Contextualize payload based on selected scanning vector
+    let payloadText = input;
+    if (mode === 'file') payloadText = `[FILE_HASH_VECTOR]: ${input}`;
+    if (mode === 'qrcode') payloadText = `[QR_CODE_RAW_DATA]: ${input}`;
+
     try {
       const response = await fetch('https://comp-app-0k3a.onrender.com/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: input }),
+        body: JSON.stringify({ payload: payloadText }),
       });
 
       if (!response.ok) throw new Error('Network firewall rejected execution path.');
@@ -36,7 +44,7 @@ export default function Scanner() {
       window.dispatchEvent(new CustomEvent('zerotrust-scan-completed', {
         detail: {
           timestamp: new Date().toLocaleTimeString(),
-          payload: input,
+          payload: `${mode.toUpperCase()} Matrix: ${input}`,
           threat_level: data.threat_level,
           risk_score: data.risk_score,
           source: data.source,
@@ -50,6 +58,13 @@ export default function Scanner() {
     }
   };
 
+  const changeMode = (newMode: ScannerMode) => {
+    setMode(newMode);
+    setInput('');
+    setResult(null);
+    setError(null);
+  };
+
   const isThreat = result?.threat_level.includes('🔴') || result?.threat_level.includes('HIGH') || result?.threat_level.includes('CRITICAL');
 
   return (
@@ -58,14 +73,39 @@ export default function Scanner() {
       <div className="flex items-center justify-between border-b border-white/5 pb-4">
         <div>
           <h2 className="text-3xl font-black tracking-tight uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-neutral-200 to-neutral-400">
-            Threat Analytics Gateway
+            Multi-Vector Gateway
           </h2>
-          <p className="text-neutral-500 text-xs font-mono mt-1">SECURE PORT // CORE MATRIX DEPLOYMENT ACTIVE</p>
+          <p className="text-neutral-500 text-xs font-mono mt-1">SECURE NETWORK DEPLOYMENT // MODULAR SHIELDS ACTIVE</p>
         </div>
         <Cpu className={`h-5 w-5 text-purple-500/50 ${loading ? 'animate-spin' : ''}`} />
       </div>
 
-      {/* Input Core Console */}
+      {/* Selector Array Tabs */}
+      <div className="grid grid-cols-3 gap-2 p-1.5 bg-neutral-900/60 border border-white/5 rounded-xl backdrop-blur-md">
+        <button
+          onClick={() => changeMode('url')}
+          className={`py-2.5 rounded-lg text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 transition-all ${mode === 'url' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+        >
+          <Globe className="h-3.5 w-3.5" />
+          <span>URL / Text</span>
+        </button>
+        <button
+          onClick={() => changeMode('file')}
+          className={`py-2.5 rounded-lg text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 transition-all ${mode === 'file' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+        >
+          <FileCode className="h-3.5 w-3.5" />
+          <span>File Hash</span>
+        </button>
+        <button
+          onClick={() => changeMode('qrcode')}
+          className={`py-2.5 rounded-lg text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 transition-all ${mode === 'qrcode' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+        >
+          <QrCode className="h-3.5 w-3.5" />
+          <span>QR Code</span>
+        </button>
+      </div>
+
+      {/* Dynamic Input Console Wrapper */}
       <div className="p-6 rounded-2xl border border-white/10 bg-neutral-900/40 backdrop-blur-xl relative overflow-hidden group hover:border-purple-500/30 transition-all duration-500">
         {loading && (
           <div className="absolute inset-0 pointer-events-none z-10">
@@ -77,14 +117,18 @@ export default function Scanner() {
         <form onSubmit={handleScan} className="space-y-4">
           <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 mb-1">
             <Terminal className="h-3 w-3 text-purple-400" />
-            <span>sys_root@zerotrust:~# input_payload --verify</span>
+            <span>sys_root@zerotrust:~# input_{mode}_vector --verify</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <input 
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Inject raw system tokens or deep links for live validation..." 
+              placeholder={
+                mode === 'url' ? "Inject raw string text tokens or suspicious deep links..." :
+                mode === 'file' ? "Enter cryptographic checksum matrix (SHA-256 / MD5 hash)..." :
+                "Paste the decoded text payload content extracted from target QR matrix..."
+              }
               className="flex-1 px-4 py-3 bg-black/60 border border-white/10 rounded-xl text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 text-sm font-mono transition-all duration-300"
             />
             <button 
@@ -99,8 +143,8 @@ export default function Scanner() {
                 </>
               ) : (
                 <>
-                  <Radar className="h-3.5 w-3.5 animate-pulse" />
-                  Deploy Scan
+                  <Radar className="h-3.5 w-3.5" />
+                  Scan Vector
                 </>
               )}
             </button>
@@ -115,7 +159,7 @@ export default function Scanner() {
         </div>
       )}
 
-      {/* Modern High-End Verdict Report Display */}
+      {/* High-End Verdict Report Display */}
       {result && (
         <div className={`p-6 rounded-2xl border backdrop-blur-xl transform transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 ${isThreat ? 'border-red-500/30 bg-red-500/5 glow-red' : 'border-emerald-500/30 bg-emerald-500/5 glow-emerald'}`}>
           <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
@@ -125,7 +169,7 @@ export default function Scanner() {
                   {isThreat ? <ShieldAlert className="h-5 w-5 animate-bounce" /> : <ShieldCheck className="h-5 w-5 text-emerald-400" />}
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">SYSTEM DIAGNOSTIC SUMMARY</div>
+                  <div className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">{mode} validation analysis</div>
                   <span className="font-black text-xl tracking-tight text-white">Verdict: {result.threat_level}</span>
                 </div>
               </div>
@@ -134,7 +178,7 @@ export default function Scanner() {
               </p>
               <div className="flex items-center gap-4 text-[10px] font-mono text-neutral-500">
                 <span>NODE: {result.source}</span>
-                <span>STATUS: PARSING_COMPLETE</span>
+                <span>VECTOR TYPE: {mode.toUpperCase()}</span>
               </div>
             </div>
             
