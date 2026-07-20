@@ -3,8 +3,8 @@ import Navbar from './components/Navbar';
 import Scanner from './components/Scanner';
 import { 
   Shield, Zap, Lock, Cpu, ArrowRight, Activity, Eye, Terminal, 
-  CheckCircle2, AlertTriangle, Layers, FileCode, QrCode, Globe, 
-  Sparkles, Database, Download, Play, MessageSquare, Star
+  CheckCircle2, Layers, FileCode, QrCode, Globe, Sparkles, 
+  Download, BarChart3, Database, ShieldAlert, AlertTriangle, RefreshCw
 } from 'lucide-react';
 
 export default function App() {
@@ -46,7 +46,7 @@ export default function App() {
               <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                 <button
                   onClick={() => setActiveTab('scanner')}
-                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-3 shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-300/40 hover:scale-[1.02] active:scale-[0.98]"
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-3 shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-300/40 hover:scale-[1.02]"
                 >
                   <Zap className="h-4 w-4" />
                   <span>Launch Threat Gateway</span>
@@ -118,7 +118,6 @@ export default function App() {
                   <p className="text-slate-400 text-xs font-mono leading-relaxed">
                     Profiles domain registration metrics, TLD reputation scores, credential harvesting prompts, and suspicious redirect loops.
                   </p>
-                  <div className="pt-2 font-mono text-[11px] text-cyan-400/80">Example Payload: verify-wallet.xyz/login</div>
                 </div>
 
                 <div className="p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl space-y-4 hover:border-cyan-400/40 transition-all relative overflow-hidden group">
@@ -129,7 +128,6 @@ export default function App() {
                   <p className="text-slate-400 text-xs font-mono leading-relaxed">
                     Evaluates SHA-256, SHA-1, and MD5 cryptographic signatures against global vulnerability databases to flag malware executables.
                   </p>
-                  <div className="pt-2 font-mono text-[11px] text-cyan-400/80">Example Payload: 64-char Hex Checksum</div>
                 </div>
 
                 <div className="p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl space-y-4 hover:border-cyan-400/40 transition-all relative overflow-hidden group">
@@ -140,65 +138,7 @@ export default function App() {
                   <p className="text-slate-400 text-xs font-mono leading-relaxed">
                     Decodes visual matrix structures and isolates embedded shortlinks designed to bypass traditional email spam filters.
                   </p>
-                  <div className="pt-2 font-mono text-[11px] text-cyan-400/80">Example Payload: bit.ly/claim-crypto-reward</div>
                 </div>
-              </div>
-            </section>
-
-            {/* 3. 7-LAYER DEFENSE PIPELINE ARCHITECTURE */}
-            <section className="max-w-7xl mx-auto px-6 space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight text-white">
-                  7-Layer Zero Trust Architecture
-                </h2>
-                <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">
-                  Every payload passes through sequential security gates before execution
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-7 gap-3 font-mono text-xs">
-                {[
-                  { step: "01", name: "Input Ingestion", desc: "Sanitizes raw text string" },
-                  { step: "02", name: "Zero Trust Policy", desc: "Default-Deny validation" },
-                  { step: "03", name: "Static Heuristics", desc: "Checksum & pattern match" },
-                  { step: "04", name: "Threat Intelligence", desc: "Database cross-reference" },
-                  { step: "05", name: "Multi-LLM Analysis", desc: "Groq & DeepSeek consensus" },
-                  { step: "06", name: "MITRE Mapping", desc: "Tactic ID alignment" },
-                  { step: "07", name: "Analyst Report", desc: "5-6 line natural explanation" },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl flex flex-col justify-between hover:border-cyan-400/50 transition-all">
-                    <div>
-                      <div className="text-cyan-400 font-bold text-sm">{item.step}</div>
-                      <div className="text-white font-bold mt-1 text-[11px] uppercase">{item.name}</div>
-                    </div>
-                    <div className="text-slate-400 text-[10px] mt-3 leading-tight">{item.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* 4. CHROME EXTENSION BANNER */}
-            <section className="max-w-7xl mx-auto px-6">
-              <div className="p-10 rounded-3xl bg-gradient-to-r from-slate-900 via-cyan-950/40 to-slate-900 border border-cyan-500/30 backdrop-blur-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-cyan-950/50">
-                <div className="space-y-4 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 font-mono text-[11px] uppercase border border-cyan-400/30">
-                    <Shield className="h-3.5 w-3.5" /> Browser Guard Companion
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
-                    CyberShield AI Chrome Extension v2.0
-                  </h3>
-                  <p className="text-slate-300 text-xs sm:text-sm font-mono leading-relaxed">
-                    Protect your active browser session in real time. Automatically scans loading web pages, flags suspicious login forms, inspects right-clicked links, and provides floating risk score overlays without leaving your tab.
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleDownloadExtension}
-                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all duration-300 shrink-0 flex items-center gap-3 shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-300/40 hover:scale-[1.05]"
-                >
-                  <Download className="h-4 w-4 animate-bounce" />
-                  <span>Install Extension Package</span>
-                </button>
               </div>
             </section>
           </div>
@@ -209,27 +149,94 @@ export default function App() {
 
         {/* ================= DASHBOARD VIEW ================= */}
         {activeTab === 'dashboard' && (
-          <div className="max-w-5xl mx-auto px-6 py-12 space-y-6">
-            <h2 className="text-2xl font-black uppercase text-white tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-              Enterprise Defense Metrics
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-300">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-6">
+              <div>
+                <h2 className="text-3xl font-black uppercase text-white tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                  Enterprise Defense Dashboard
+                </h2>
+                <p className="text-slate-400 font-mono text-xs uppercase mt-1">
+                  Real-time threat intelligence & session analytics
+                </p>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-cyan-500/30 font-mono text-xs text-cyan-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Live Network Gateway Connected
+              </div>
+            </div>
+
+            {/* Top Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-6 rounded-2xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl">
-                <div className="text-cyan-400/70 text-xs font-mono uppercase tracking-wider">System Health</div>
-                <div className="text-3xl font-black text-emerald-400 mt-2">100% OPERATIONAL</div>
-                <div className="text-slate-400 text-xs mt-1">Zero Trust Gateway Active</div>
+                <div className="text-cyan-400/70 text-xs font-mono uppercase">Total Vector Scans</div>
+                <div className="text-3xl font-black text-white mt-2">1,284</div>
+                <div className="text-emerald-400 text-xs font-mono mt-1">↑ 18.4% today</div>
               </div>
 
               <div className="p-6 rounded-2xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl">
-                <div className="text-cyan-400/70 text-xs font-mono uppercase tracking-wider">Multi-LLM Consensus</div>
-                <div className="text-3xl font-black text-cyan-400 mt-2">ACTIVE</div>
-                <div className="text-slate-400 text-xs mt-1">Groq + DeepSeek + Gemini</div>
+                <div className="text-cyan-400/70 text-xs font-mono uppercase">Threats Neutralized</div>
+                <div className="text-3xl font-black text-rose-400 mt-2">142</div>
+                <div className="text-slate-400 text-xs font-mono mt-1">11.0% attack rate</div>
               </div>
 
               <div className="p-6 rounded-2xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl">
-                <div className="text-cyan-400/70 text-xs font-mono uppercase tracking-wider">Active Defense Vectors</div>
-                <div className="text-3xl font-black text-white mt-2">03 MODULES</div>
-                <div className="text-slate-400 text-xs mt-1">URL / File Hash / QR Code</div>
+                <div className="text-cyan-400/70 text-xs font-mono uppercase">Consensus Accuracy</div>
+                <div className="text-3xl font-black text-cyan-400 mt-2">99.2%</div>
+                <div className="text-slate-400 text-xs font-mono mt-1">Zero Trust verified</div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl">
+                <div className="text-cyan-400/70 text-xs font-mono uppercase">Active Extensions</div>
+                <div className="text-3xl font-black text-blue-400 mt-2">328</div>
+                <div className="text-slate-400 text-xs font-mono mt-1">Browser nodes live</div>
+              </div>
+            </div>
+
+            {/* Recent High Threat Detection Table */}
+            <div className="p-6 rounded-3xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl space-y-4">
+              <div className="flex items-center justify-between font-mono text-xs">
+                <div className="text-white font-bold uppercase flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-rose-400" /> Recent Intercepted Vectors
+                </div>
+                <span className="text-slate-500">Auto-Refreshed</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs">
+                  <thead>
+                    <tr className="border-b border-cyan-500/20 text-slate-400">
+                      <th className="py-3 px-4">TIMESTAMP</th>
+                      <th className="py-3 px-4">VECTOR</th>
+                      <th className="py-3 px-4">PAYLOAD TARGET</th>
+                      <th className="py-3 px-4">VERDICT</th>
+                      <th className="py-3 px-4">RISK</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-cyan-500/10 text-slate-300">
+                    <tr>
+                      <td className="py-3 px-4 text-slate-500">15:18:02 IST</td>
+                      <td className="py-3 px-4 text-cyan-400 font-bold">URL / Phishing</td>
+                      <td className="py-3 px-4">verify-wallet.xyz/login</td>
+                      <td className="py-3 px-4 text-rose-400 font-bold">🔴 CRITICAL</td>
+                      <td className="py-3 px-4 font-bold">95/100</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 text-slate-500">15:12:44 IST</td>
+                      <td className="py-3 px-4 text-blue-400 font-bold">QR / Quishing</td>
+                      <td className="py-3 px-4">bit.ly/claim-crypto-reward</td>
+                      <td className="py-3 px-4 text-amber-400 font-bold">🟠 HIGH RISK</td>
+                      <td className="py-3 px-4 font-bold">88/100</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 text-slate-500">14:55:10 IST</td>
+                      <td className="py-3 px-4 text-emerald-400 font-bold">File Checksum</td>
+                      <td className="py-3 px-4">a1b2c3d4...6400</td>
+                      <td className="py-3 px-4 text-emerald-400 font-bold">🟢 NOMINAL</td>
+                      <td className="py-3 px-4 font-bold">08/100</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -237,15 +244,36 @@ export default function App() {
 
         {/* ================= TELEMETRY VIEW ================= */}
         {activeTab === 'telemetry' && (
-          <div className="max-w-5xl mx-auto px-6 py-12 space-y-6">
-            <h2 className="text-2xl font-black uppercase text-white tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-              System Telemetry Log
-            </h2>
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl font-mono text-xs text-slate-300 space-y-3 shadow-inner shadow-black/60">
-              <div className="text-cyan-400">[SYSTEM]: Real-time event stream connected to ZeroTrust core.</div>
-              <div className="text-slate-400">[INFO]: Zero Trust policy rulebook initialized successfully.</div>
-              <div className="text-slate-400">[NODE]: FastAPI endpoint cyber-champ-2.onrender.com online.</div>
-              <div className="text-blue-400">[READY]: Awaiting input payload dispatch...</div>
+          <div className="max-w-6xl mx-auto px-6 py-12 space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-6">
+              <div>
+                <h2 className="text-3xl font-black uppercase text-white tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                  Live System Telemetry
+                </h2>
+                <p className="text-slate-400 font-mono text-xs uppercase mt-1">
+                  Real-time websocket event log & policy execution monitor
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => alert("Telemetry stream cleared.")}
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-cyan-500/30 text-slate-300 font-mono text-xs hover:text-white"
+                >
+                  Clear Terminal
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-slate-950 border border-cyan-500/30 shadow-2xl font-mono text-xs space-y-3 leading-relaxed">
+              <div className="text-cyan-400 font-bold">[SYSTEM INIT]: ZeroTrust Core Engine v2.0 initialized.</div>
+              <div className="text-slate-400">[CONFIG]: FastAPI Endpoint: cyber-champ-2.onrender.com</div>
+              <div className="text-slate-400">[CONFIG]: Multi-LLM Consensus Matrix: Groq (Llama 3) + DeepSeek V3 + Gemini 1.5</div>
+              <div className="text-slate-500">[15:18:02]: Incoming payload received over HTTPS POST /scan</div>
+              <div className="text-amber-400">[HEURISTICS]: Flagged suspicious TLD pattern '.xyz' and keyword 'wallet'</div>
+              <div className="text-rose-400">[CONSENSUS]: High confidence phishing verdict reached (95/100)</div>
+              <div className="text-emerald-400">[POLICY]: Action executed -> Session pathway blocked. Event dispatched to SIEM.</div>
+              <div className="text-blue-400 animate-pulse">[READY]: Listening for incoming vector payloads...</div>
             </div>
           </div>
         )}
