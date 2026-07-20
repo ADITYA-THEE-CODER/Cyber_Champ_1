@@ -1,3 +1,20 @@
+import React, { useState } from 'react';
+import TelemetryView from './components/TelemetryView';
+import DashboardView from './components/DashboardView';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<'home' | 'scanner' | 'dashboard' | 'telemetry'>('dashboard');
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Navigation render here */}
+      {activeTab === 'dashboard' && <DashboardView />}
+      {activeTab === 'telemetry' && <TelemetryView />}
+    </div>
+  );
+}
+
+
 import React, { useState, useEffect } from 'react';
 import { 
   Shield, Zap, Lock, Cpu, ArrowRight, Activity, Eye, Terminal, 
