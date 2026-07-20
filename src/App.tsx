@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Shield, Zap, Lock, Cpu, ArrowRight, Activity, Eye, Terminal, 
-  CheckCircle2, Layers, FileCode, QrCode, Globe, Sparkles, 
-  Download, BarChart3, Database, ShieldAlert, AlertTriangle, 
-  RefreshCw, Radio, Server, Play, Trash2, Pause, Filter, Search, 
-  HelpCircle, FileText, UserCheck, Mail, Key, User, TrendingUp 
+  Layers, FileCode, QrCode, Globe, Sparkles, Download, BarChart3, 
+  Database, ShieldAlert, RefreshCw, Server, Play, Trash2, Pause, 
+  Filter, HelpCircle, FileText, UserCheck, TrendingUp 
 } from 'lucide-react';
 
 // ==========================================
@@ -46,8 +45,6 @@ export default function App() {
   // --- TELEMETRY STATE ---
   const [isStreaming, setIsStreaming] = useState(true);
   const [filterType, setFilterType] = useState('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLog, setSelectedLog] = useState<TelemetryLog | null>(null);
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([
     { id: 1, timestamp: '15:10:01.002', subsystem: 'GATEWAY', type: 'SYS', message: 'ZeroTrust Core Gateway listening on port 443.' },
     { id: 2, timestamp: '15:10:01.450', subsystem: 'HEURISTICS', type: 'POL', message: 'Loaded 14,200 active threat signatures into RAM.' },
@@ -139,7 +136,7 @@ export default function App() {
       setScanResult(data);
     } catch (err: any) {
       setScanError(err.message || 'Threat detection backend engine unreachable.');
-    } font-mono finally {
+    } finally {
       setScanLoading(false);
     }
   };
