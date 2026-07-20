@@ -1,72 +1,74 @@
-import React, { useState } from 'react';
-import TelemetryView from './components/TelemetryView';
-import DashboardView from './components/DashboardView';
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'scanner' | 'dashboard' | 'telemetry'>('dashboard');
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Navigation render here */}
-      {activeTab === 'dashboard' && <DashboardView />}
-      {activeTab === 'telemetry' && <TelemetryView />}
-    </div>
-  );
-}
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Zap, Lock, Cpu, ArrowRight, Activity, Eye, Terminal, 
   CheckCircle2, Layers, FileCode, QrCode, Globe, Sparkles, 
   Download, BarChart3, Database, ShieldAlert, AlertTriangle, 
-  RefreshCw, Radio, HardDrive, Server, Play, Trash2, Pause,
-  Filter, Search, Clock, Sliders, Check, AlertCircle, ExternalLink
+  RefreshCw, Radio, Server, Play, Trash2, Pause, Filter, Search, 
+  HelpCircle, FileText, UserCheck, Mail, Key, User, TrendingUp 
 } from 'lucide-react';
 
-// --- TYPES & INTERFACES ---
-type TabType = 'home' | 'scanner' | 'dashboard' | 'telemetry';
+// ==========================================
+// TYPES & INTERFACES
+// ==========================================
+type TabType = 'home' | 'scanner' | 'how-it-works' | 'policies' | 'dashboard' | 'telemetry' | 'auth';
 type ScannerMode = 'url' | 'file' | 'qrcode';
 
 interface ScanResult {
   threat_level: string;
   risk_score: string;
   confidence?: string;
-  source: string;
+  source?: string;
   explanation: string;
   recommendation?: string;
 }
 
-interface LogEntry {
+interface TelemetryLog {
   id: number;
-  time: string;
-  type: 'SYS' | 'NET' | 'POL' | 'NODE' | 'WARN' | 'SIEM' | 'ERR';
-  msg: string;
+  timestamp: string;
+  subsystem: 'GATEWAY' | 'CONSENSUS' | 'FIREWALL' | 'HEURISTICS' | 'EXTENSION';
+  type: 'SYS' | 'NET' | 'POL' | 'NODE' | 'WARN' | 'ERR';
+  message: string;
 }
 
+// ==========================================
+// MAIN APP COMPONENT
+// ==========================================
 export default function App() {
-  // Navigation State
   const [activeTab, setActiveTab] = useState<TabType>('home');
 
-  // Scanner States
+  // --- SCANNER STATE ---
   const [scanMode, setScanMode] = useState<ScannerMode>('url');
   const [scanInput, setScanInput] = useState('');
   const [scanLoading, setScanLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
 
-  // Telemetry States
+  // --- TELEMETRY STATE ---
   const [isStreaming, setIsStreaming] = useState(true);
-  const [logFilter, setLogFilter] = useState<string>('ALL');
-  const [telemetryLogs, setTelemetryLogs] = useState<LogEntry[]>([
-    { id: 1, time: '15:10:01', type: 'SYS', msg: 'ZeroTrust Core Engine initialized successfully.' },
-    { id: 2, time: '15:10:02', type: 'NET', msg: 'FastAPI core gateway bound to cyber-champ-2.onrender.com.' },
-    { id: 3, time: '15:10:05', type: 'POL', msg: '7-Layer Default-Deny rulebook loaded into memory.' },
-    { id: 4, time: '15:10:12', type: 'NODE', msg: 'Groq Llama-3 consensus worker initialized.' },
-    { id: 5, time: '15:10:18', type: 'NODE', msg: 'DeepSeek V3 analysis node online (28ms latency).' },
+  const [filterType, setFilterType] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLog, setSelectedLog] = useState<TelemetryLog | null>(null);
+  const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([
+    { id: 1, timestamp: '15:10:01.002', subsystem: 'GATEWAY', type: 'SYS', message: 'ZeroTrust Core Gateway listening on port 443.' },
+    { id: 2, timestamp: '15:10:01.450', subsystem: 'HEURISTICS', type: 'POL', message: 'Loaded 14,200 active threat signatures into RAM.' },
+    { id: 3, timestamp: '15:10:02.110', subsystem: 'CONSENSUS', type: 'NODE', message: 'Groq Llama-3 cluster connected (12ms RTT).' },
+    { id: 4, timestamp: '15:10:02.340', subsystem: 'CONSENSUS', type: 'NODE', message: 'DeepSeek V3 consensus engine online (28ms RTT).' },
+    { id: 5, timestamp: '15:10:05.890', subsystem: 'EXTENSION', type: 'NET', message: 'Browser extension client #8921 established WebSocket bridge.' }
   ]);
 
-  // Demo Presets for Scanner
+  // --- HOW IT WORKS STATE ---
+  const [activePipelineStep, setActivePipelineStep] = useState(0);
+
+  // --- POLICIES STATE ---
+  const [selectedPolicy, setSelectedPolicy] = useState('zerotrust');
+
+  // --- AUTH STATE ---
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Sample payloads for Quick Demo Testing
   const samplePayloads = {
     url: [
       { label: '🔴 Suspicious Phishing Link', value: 'http://verify-your-wallet.xyz/login' },
@@ -82,34 +84,34 @@ export default function App() {
     ]
   };
 
-  // Real-time log streamer effect
+  // Telemetry Stream Simulator Effect
   useEffect(() => {
     if (activeTab !== 'telemetry' || !isStreaming) return;
 
-    const mockEvents: Array<{ type: LogEntry['type']; msg: string }> = [
-      { type: 'NET', msg: 'Incoming vector request from Chrome Extension node #948.' },
-      { type: 'POL', msg: 'Entropy analysis complete for string payload. Score: 0.12 (NOMINAL).' },
-      { type: 'NODE', msg: 'Groq Llama-3 node heartbeat check OK (14ms response time).' },
-      { type: 'NODE', msg: 'DeepSeek V3 consensus pipeline latency nominal (28ms response).' },
-      { type: 'WARN', msg: 'Suspicious TLD lookup intercepted (.xyz domain structure detected).' },
-      { type: 'POL', msg: 'Zero Trust Sanitizer stripped query parameter track_id=48201.' },
-      { type: 'SIEM', msg: 'Telemetry stream synced with central logging database.' }
+    const mockPool: Array<Omit<TelemetryLog, 'id' | 'timestamp'>> = [
+      { subsystem: 'HEURISTICS', type: 'POL', message: 'String entropy validation complete. Score: 0.142 (SAFE).' },
+      { subsystem: 'FIREWALL', type: 'WARN', message: 'Suspicious domain lookup intercepted: auth-check-token.xyz' },
+      { subsystem: 'CONSENSUS', type: 'NODE', message: 'Multi-LLM quorum achieved. Decision matrix aligned (3/3).' },
+      { subsystem: 'EXTENSION', type: 'NET', message: 'Encrypted payload batch received from chrome-node-302.' },
+      { subsystem: 'GATEWAY', type: 'SYS', message: 'PostgreSQL log pipeline synced (0 pending commits).' },
+      { subsystem: 'FIREWALL', type: 'ERR', message: 'High-entropy payload flagged in POST /api/v1/scan' }
     ];
 
-    let counter = 6;
     const interval = setInterval(() => {
-      const nextEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
-      const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+      const randomEvent = mockPool[Math.floor(Math.random() * mockPool.length)];
+      const now = new Date();
+      const timeStr = `${now.toLocaleTimeString('en-US', { hour12: false })}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+
       setTelemetryLogs(prev => [
-        ...prev.slice(-14), 
-        { id: counter++, time: now, type: nextEvent.type, msg: nextEvent.msg }
+        ...prev.slice(-49),
+        { id: Date.now(), timestamp: timeStr, ...randomEvent }
       ]);
-    }, 2200);
+    }, 1800);
 
     return () => clearInterval(interval);
   }, [activeTab, isStreaming]);
 
-  // Execute Threat Scan
+  // Scan Execution Handler
   const handleScan = async (e?: React.FormEvent, customPayload?: string) => {
     if (e) e.preventDefault();
     const targetInput = customPayload || scanInput;
@@ -132,91 +134,91 @@ export default function App() {
         body: JSON.stringify({ payload: payloadText }),
       });
 
-      if (!response.ok) throw new Error('Network firewall or execution path rejected request.');
+      if (!response.ok) throw new Error('Firewall or execution path rejected request.');
       const data = await response.json();
       setScanResult(data);
     } catch (err: any) {
       setScanError(err.message || 'Threat detection backend engine unreachable.');
-    } finally {
+    } font-mono finally {
       setScanLoading(false);
     }
   };
 
   const handleDownloadExtension = () => {
-    alert("ZeroTrust One Chrome Extension package initialized (.zip).\n\n1. Unpack the zip file.\n2. Open chrome://extensions in your browser.\n3. Enable 'Developer mode' and click 'Load unpacked'.");
+    alert("ZeroTrust One Chrome Extension package initialized (.zip).\n\n1. Unpack the zip file.\n2. Open chrome://extensions in your browser.\n3. Turn on 'Developer mode' and click 'Load unpacked'.");
   };
 
-  const filteredLogs = telemetryLogs.filter(log => logFilter === 'ALL' || log.type === logFilter);
+  const navItems = [
+    { id: 'home', label: 'Home', icon: Globe },
+    { id: 'scanner', label: 'Scanner', icon: Zap },
+    { id: 'how-it-works', label: 'How It Works', icon: HelpCircle },
+    { id: 'policies', label: 'Policies', icon: FileText },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'telemetry', label: 'Telemetry', icon: Terminal },
+    { id: 'auth', label: 'Sign In', icon: UserCheck },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden selection:bg-cyan-500 selection:text-black">
-      {/* Background Ambient Glows */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden font-sans selection:bg-cyan-500 selection:text-black">
+      {/* Background Glow Effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-cyan-500/10 rounded-full blur-[170px] pointer-events-none animate-pulse duration-[4000ms]" />
       <div className="absolute top-1/3 right-1/4 w-[700px] h-[700px] bg-blue-600/10 rounded-full blur-[180px] pointer-events-none animate-pulse duration-[6000ms]" />
 
       {/* HEADER / NAVIGATION BAR */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-2xl border-b border-cyan-500/20">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Logo */}
+      <header className="border-b border-cyan-500/20 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50 shadow-lg shadow-cyan-950/30">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+          {/* Cyber Brand Logo */}
           <div 
+            className="flex items-center gap-3 cursor-pointer group shrink-0" 
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-400 group-hover:scale-105 group-hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-              <Shield className="h-6 w-6" />
+            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-400 group-hover:border-cyan-300 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all">
+              <Shield className="h-5 w-5" />
             </div>
-            <div>
-              <span className="text-xl font-black uppercase tracking-wider text-white">ZeroTrust</span>
-              <span className="text-xl font-black uppercase tracking-wider text-cyan-400 ml-1">One</span>
-              <span className="block text-[9px] font-mono text-slate-400 tracking-widest uppercase">Autonomous Defense Hub</span>
-            </div>
+            <span className="font-black text-lg tracking-tight text-white uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">
+              ZeroTrust<span className="text-cyan-400">One</span>
+            </span>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-900/90 border border-cyan-500/20">
-            {[
-              { id: 'home', label: 'Overview', icon: Globe },
-              { id: 'scanner', label: 'Scanner', icon: Zap },
-              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-              { id: 'telemetry', label: 'Telemetry', icon: Terminal },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
+          {/* Navigation Bar */}
+          <div className="hidden lg:flex items-center gap-1 p-1 bg-slate-900/90 border border-cyan-500/20 rounded-xl shadow-inner shadow-cyan-950/50 overflow-x-auto">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
               return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`px-4 py-2 rounded-xl font-mono text-xs uppercase transition-all flex items-center gap-2 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-300/40'
-                      : 'text-slate-400 hover:text-cyan-300 hover:bg-cyan-950/30'
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as TabType)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase transition-all flex items-center gap-2 whitespace-nowrap ${
+                    isActive 
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-300/40' 
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-cyan-950/40'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  <span>{tab.label}</span>
+                  {item.label}
                 </button>
               );
             })}
-          </nav>
+          </div>
 
-          {/* Extension Download Button */}
+          {/* Electric Cyan CTA */}
           <button
             onClick={handleDownloadExtension}
-            className="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-300 font-mono text-xs uppercase font-bold border border-cyan-500/30 hover:border-cyan-400/60 transition-all shadow-lg"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] border border-cyan-300/40 hover:scale-[1.02] active:scale-[0.98] shrink-0"
           >
-            <Download className="h-3.5 w-3.5 text-cyan-400" />
+            <Download className="h-3.5 w-3.5 animate-bounce" />
             <span>Extension</span>
           </button>
         </div>
       </header>
 
-      {/* MAIN VIEW CONTAINER */}
+      {/* PAGE ROUTER */}
       <main className="pb-24 relative z-10">
-        
-        {/* ================= 1. HOMEPAGE / OVERVIEW ================= */}
+
+        {/* ================= 1. HOME / OVERVIEW ================= */}
         {activeTab === 'home' && (
           <div className="space-y-20 max-w-7xl mx-auto px-6 pt-12 animate-in fade-in duration-300">
-            {/* Hero Banner */}
             <section className="text-center space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-400 font-mono text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(34,211,238,0.2)]">
                 <Sparkles className="h-3.5 w-3.5 animate-spin" /> Next-Gen AI Threat Inspection System
@@ -230,10 +232,10 @@ export default function App() {
                 ZeroTrust One protects enterprise endpoints across web forms, emails, file hashes, QR code matrices, and deep links—running every payload through a 7-layer validation pipeline.
               </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+              <div className="flex flex-wrap items-center justify-center gap-4 pt-4 font-mono">
                 <button
                   onClick={() => setActiveTab('scanner')}
-                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-3 shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-300/40 hover:scale-[1.02]"
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-3 shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-300/40 hover:scale-[1.02]"
                 >
                   <Zap className="h-4 w-4 animate-bounce" />
                   <span>Launch Threat Gateway</span>
@@ -242,83 +244,39 @@ export default function App() {
 
                 <button
                   onClick={() => setActiveTab('telemetry')}
-                  className="px-6 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-mono text-xs font-bold uppercase tracking-wider transition-all border border-cyan-500/30 flex items-center gap-2 shadow-lg"
+                  className="px-6 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-bold uppercase tracking-wider transition-all border border-cyan-500/30 flex items-center gap-2 shadow-lg"
                 >
                   <Terminal className="h-4 w-4 text-cyan-400" />
                   <span>View Telemetry Log</span>
                 </button>
               </div>
 
-              {/* Metric Quick Stats */}
+              {/* Metric Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8">
-                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all">
-                  <div className="text-cyan-400 text-xs font-mono uppercase">Gateway Engine</div>
+                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all font-mono">
+                  <div className="text-cyan-400 text-xs uppercase">Gateway Engine</div>
                   <div className="text-2xl font-black text-emerald-400 mt-1 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" /> 100% ONLINE
                   </div>
-                  <div className="text-slate-500 text-[10px] font-mono mt-1">FastAPI REST Protocol</div>
+                  <div className="text-slate-500 text-[10px] mt-1">FastAPI REST Protocol</div>
                 </div>
 
-                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all">
-                  <div className="text-cyan-400 text-xs font-mono uppercase">AI Consensus</div>
+                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all font-mono">
+                  <div className="text-cyan-400 text-xs uppercase">AI Consensus</div>
                   <div className="text-2xl font-black text-cyan-400 mt-1">GROQ + DEEPSEEK</div>
-                  <div className="text-slate-500 text-[10px] font-mono mt-1">Multi-LLM Validation</div>
+                  <div className="text-slate-500 text-[10px] mt-1">Multi-LLM Validation</div>
                 </div>
 
-                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all">
-                  <div className="text-cyan-400 text-xs font-mono uppercase">Security Pipeline</div>
+                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all font-mono">
+                  <div className="text-cyan-400 text-xs uppercase">Security Pipeline</div>
                   <div className="text-2xl font-black text-white mt-1">07 LAYERS</div>
-                  <div className="text-slate-500 text-[10px] font-mono mt-1">Zero Trust Rulebook</div>
+                  <div className="text-slate-500 text-[10px] mt-1">Zero Trust Rulebook</div>
                 </div>
 
-                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all">
-                  <div className="text-cyan-400 text-xs font-mono uppercase">Inspection Speed</div>
+                <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl text-left hover:border-cyan-400/40 transition-all font-mono">
+                  <div className="text-cyan-400 text-xs uppercase">Inspection Speed</div>
                   <div className="text-2xl font-black text-blue-400 mt-1">&lt; 140ms</div>
-                  <div className="text-slate-500 text-[10px] font-mono mt-1">Sub-second Latency</div>
-                </div>
-              </div>
-            </section>
-
-            {/* Feature Cards Grid */}
-            <section className="space-y-6">
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">
-                  Multi-Vector Protection Shields
-                </h2>
-                <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">
-                  Comprehensive coverage against evolving attack vectors
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl space-y-4 hover:border-cyan-400/40 transition-all group">
-                  <div className="p-3 w-fit rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-400/30 group-hover:scale-110 transition-transform">
-                    <Globe className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white uppercase font-mono">1. Phishing & Malicious URLs</h3>
-                  <p className="text-slate-400 text-xs font-mono leading-relaxed">
-                    Evaluates registration age, domain entropy, obfuscated redirects, and credential harvesting patterns in real time.
-                  </p>
-                </div>
-
-                <div className="p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl space-y-4 hover:border-cyan-400/40 transition-all group">
-                  <div className="p-3 w-fit rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-400/30 group-hover:scale-110 transition-transform">
-                    <FileCode className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white uppercase font-mono">2. Cryptographic File Hashes</h3>
-                  <p className="text-slate-400 text-xs font-mono leading-relaxed">
-                    Inspects SHA-256 and MD5 cryptographic signatures against global vulnerability databases to block malicious executables.
-                  </p>
-                </div>
-
-                <div className="p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl space-y-4 hover:border-cyan-400/40 transition-all group">
-                  <div className="p-3 w-fit rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-400/30 group-hover:scale-110 transition-transform">
-                    <QrCode className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white uppercase font-mono">3. Quishing & QR Matrix</h3>
-                  <p className="text-slate-400 text-xs font-mono leading-relaxed">
-                    Decodes visual matrix structures and isolates embedded shortlinks designed to bypass traditional email spam filters.
-                  </p>
+                  <div className="text-slate-500 text-[10px] mt-1">Sub-second Latency</div>
                 </div>
               </div>
             </section>
@@ -328,24 +286,20 @@ export default function App() {
         {/* ================= 2. SCANNER ================= */}
         {activeTab === 'scanner' && (
           <div className="max-w-5xl mx-auto px-6 pt-10 space-y-8 animate-in fade-in duration-300">
-            {/* Header & Mode Switcher */}
             <div className="text-center space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-400 font-mono text-[11px] uppercase">
                 <Layers className="h-3.5 w-3.5" /> Unified Threat Inspection Engine
               </div>
-
               <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]">
                 Multi-Vector Gateway
               </h1>
 
-              <div className="inline-flex p-1.5 rounded-2xl bg-slate-900/90 border border-cyan-500/20 backdrop-blur-xl gap-2 mt-2 shadow-lg shadow-black/50">
+              <div className="inline-flex p-1.5 rounded-2xl bg-slate-900/90 border border-cyan-500/20 backdrop-blur-xl gap-2 mt-2 shadow-lg">
                 <button
                   type="button"
                   onClick={() => { setScanMode('url'); setScanResult(null); setScanError(null); setScanInput(''); }}
                   className={`px-5 py-2.5 rounded-xl font-mono text-xs uppercase transition-all flex items-center gap-2 ${
-                    scanMode === 'url'
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-300/40'
-                      : 'text-slate-400 hover:text-cyan-300'
+                    scanMode === 'url' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-cyan-300'
                   }`}
                 >
                   <Globe className="h-3.5 w-3.5" /> URL / Phishing
@@ -354,9 +308,7 @@ export default function App() {
                   type="button"
                   onClick={() => { setScanMode('file'); setScanResult(null); setScanError(null); setScanInput(''); }}
                   className={`px-5 py-2.5 rounded-xl font-mono text-xs uppercase transition-all flex items-center gap-2 ${
-                    scanMode === 'file'
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-300/40'
-                      : 'text-slate-400 hover:text-cyan-300'
+                    scanMode === 'file' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-cyan-300'
                   }`}
                 >
                   <FileCode className="h-3.5 w-3.5" /> File Hash
@@ -365,9 +317,7 @@ export default function App() {
                   type="button"
                   onClick={() => { setScanMode('qrcode'); setScanResult(null); setScanError(null); setScanInput(''); }}
                   className={`px-5 py-2.5 rounded-xl font-mono text-xs uppercase transition-all flex items-center gap-2 ${
-                    scanMode === 'qrcode'
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-300/40'
-                      : 'text-slate-400 hover:text-cyan-300'
+                    scanMode === 'qrcode' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-cyan-300'
                   }`}
                 >
                   <QrCode className="h-3.5 w-3.5" /> QR Code
@@ -375,9 +325,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* Form Input Box */}
-            <form onSubmit={(e) => handleScan(e)} className="p-6 sm:p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-2xl shadow-xl space-y-5">
-              <div className="flex items-center justify-between text-xs font-mono">
+            <form onSubmit={(e) => handleScan(e)} className="p-6 sm:p-8 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-2xl shadow-xl space-y-5 font-mono">
+              <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 text-cyan-400">
                   <Terminal className="h-4 w-4" />
                   <span>sys_root@zerotrust:~# input_{scanMode}_vector --verify</span>
@@ -391,19 +340,17 @@ export default function App() {
                   value={scanInput}
                   onChange={(e) => setScanInput(e.target.value)}
                   placeholder={
-                    scanMode === 'url'
-                      ? 'Enter domain name, suspicious link, or raw string...'
-                      : scanMode === 'file'
-                      ? 'Paste SHA-256 or MD5 cryptographic hash string...'
-                      : 'Paste decoded QR payload URL link...'
+                    scanMode === 'url' ? 'Enter domain name, suspicious link, or raw string...' :
+                    scanMode === 'file' ? 'Paste SHA-256 or MD5 cryptographic hash string...' :
+                    'Paste decoded QR payload URL link...'
                   }
-                  className="flex-1 bg-slate-950/90 border border-cyan-500/30 rounded-2xl px-5 py-3.5 text-sm text-cyan-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 font-mono shadow-inner"
+                  className="flex-1 bg-slate-950/90 border border-cyan-500/30 rounded-2xl px-5 py-3.5 text-sm text-cyan-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 shadow-inner"
                 />
 
                 <button
                   type="submit"
                   disabled={scanLoading}
-                  className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-mono text-xs font-bold uppercase transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] border border-cyan-300/40 flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
+                  className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold uppercase transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] border border-cyan-300/40 flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
                 >
                   {scanLoading ? (
                     <>
@@ -419,8 +366,8 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Sample Quick Demo Test Vectors */}
-              <div className="pt-2 border-t border-cyan-500/10 flex flex-wrap items-center gap-2 font-mono text-xs">
+              {/* Sample Presets */}
+              <div className="pt-2 border-t border-cyan-500/10 flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-slate-500">Demo Presets:</span>
                 {samplePayloads[scanMode].map((sample, idx) => (
                   <button
@@ -438,7 +385,7 @@ export default function App() {
               </div>
             </form>
 
-            {/* Error Display */}
+            {/* Error Message */}
             {scanError && (
               <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/40 text-rose-300 font-mono text-xs flex items-center gap-3 backdrop-blur-xl">
                 <ShieldAlert className="h-5 w-5 text-rose-400 shrink-0" />
@@ -446,12 +393,12 @@ export default function App() {
               </div>
             )}
 
-            {/* Detailed Verdict Card */}
+            {/* Scan Verdict Card */}
             {scanResult && (
-              <div className="p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/30 backdrop-blur-2xl shadow-2xl space-y-6 animate-in slide-in-from-bottom-4">
+              <div className="p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/30 backdrop-blur-2xl shadow-2xl space-y-6 animate-in slide-in-from-bottom-4 font-mono">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/10 pb-6">
                   <div>
-                    <div className="text-cyan-400 text-xs font-mono uppercase tracking-wider">Threat Verdict</div>
+                    <div className="text-cyan-400 text-xs uppercase">Threat Verdict</div>
                     <div className="text-2xl font-black uppercase text-white mt-1 drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
                       {scanResult.threat_level}
                     </div>
@@ -459,187 +406,262 @@ export default function App() {
 
                   <div className="flex items-center gap-6">
                     <div>
-                      <div className="text-slate-400 text-xs font-mono uppercase">AI Confidence</div>
-                      <div className="text-xl font-bold text-emerald-400 font-mono">{scanResult.confidence || '96%'}</div>
+                      <div className="text-slate-400 text-xs uppercase">AI Confidence</div>
+                      <div className="text-xl font-bold text-emerald-400">{scanResult.confidence || '96%'}</div>
                     </div>
                     <div className="border-l border-cyan-500/20 pl-6">
-                      <div className="text-slate-400 text-xs font-mono uppercase">Risk Score</div>
-                      <div className="text-3xl font-black text-cyan-400 font-mono">{scanResult.risk_score}/100</div>
+                      <div className="text-slate-400 text-xs uppercase">Risk Score</div>
+                      <div className="text-3xl font-black text-cyan-400">{scanResult.risk_score}/100</div>
                     </div>
                   </div>
                 </div>
 
-                {/* AI Explanation */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs font-bold uppercase">
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase">
                     <Cpu className="h-4 w-4" /> Multi-LLM Consensus Analysis
                   </div>
-                  <div className="p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/20 text-slate-200 font-mono text-xs leading-relaxed">
+                  <div className="p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/20 text-slate-200 text-xs leading-relaxed">
                     {scanResult.explanation}
                   </div>
                 </div>
-
-                {/* Recommendation */}
-                {scanResult.recommendation && (
-                  <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 font-mono text-xs flex items-start gap-3 text-cyan-300">
-                    <CheckCircle2 className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold uppercase text-white block mb-0.5">Remediation Protocol:</span>
-                      {scanResult.recommendation}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
         )}
 
-        {/* ================= 3. SECURITY DASHBOARD ================= */}
-        {activeTab === 'dashboard' && (
-          <div className="max-w-7xl mx-auto px-6 pt-10 space-y-8 animate-in fade-in duration-500">
-            {/* Top Bar */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-6">
-              <div>
-                <h2 className="text-3xl font-black uppercase text-white tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-                  Security Operations Dashboard
-                </h2>
-                <p className="text-slate-400 font-mono text-xs uppercase mt-1">
-                  Enterprise threat metrics & node telemetry visualizer
+        {/* ================= 3. HOW IT WORKS ================= */}
+        {activeTab === 'how-it-works' && (
+          <div className="max-w-7xl mx-auto px-6 py-10 space-y-12 animate-in fade-in duration-300 font-mono">
+            <div className="text-center space-y-4 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-400 text-xs font-bold uppercase tracking-widest">
+                <Zap className="h-3.5 w-3.5" /> Core Architecture
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-black uppercase text-white tracking-tight">
+                How Scanning Works
+              </h1>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Inside the 7-layer defense system that inspects URLs, file hashes, and QR code payloads in under 140ms.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              <div className="space-y-3">
+                {[
+                  { title: "1. Payload Ingestion & Sanitization", icon: Eye, summary: "Normalizes incoming URLs, file signatures, or QR decode vectors." },
+                  { title: "2. Static Heuristics & Signature Lookup", icon: Database, summary: "Cross-checks known bad hashes and malicious domain rulebooks." },
+                  { title: "3. Multi-LLM Consensus Matrix", icon: Cpu, summary: "Groq (Llama-3), DeepSeek V3, and Gemini perform zero-shot evaluation." },
+                  { title: "4. Policy & Risk Scoring Engine", icon: Layers, summary: "Aggregates model outputs into a unified 0-100 risk score." },
+                  { title: "5. Real-Time Telemetry & Action", icon: Terminal, summary: "Streams verdict to client extension and logs to WebSocket pipeline." }
+                ].map((step, idx) => {
+                  const Icon = step.icon;
+                  const isActive = activePipelineStep === idx;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActivePipelineStep(idx)}
+                      className={`w-full text-left p-4 rounded-2xl border transition-all flex items-start gap-4 ${
+                        isActive
+                          ? 'bg-cyan-950/40 border-cyan-400 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+                          : 'bg-slate-900/60 border-cyan-500/20 text-slate-400 hover:border-cyan-500/40 hover:text-white'
+                      }`}
+                    >
+                      <div className={`p-2.5 rounded-xl ${isActive ? 'bg-cyan-500 text-black' : 'bg-slate-950 text-cyan-400'}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold uppercase text-white">{step.title}</div>
+                        <div className="text-[11px] text-slate-400 mt-1 line-clamp-1">{step.summary}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="lg:col-span-2 p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/30 backdrop-blur-2xl space-y-6 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-cyan-500/20 pb-4">
+                  <span className="text-xs text-cyan-400 font-bold uppercase">Pipeline Phase {activePipelineStep + 1} of 5</span>
+                  <span className="px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                    ● Active Subsystem
+                  </span>
+                </div>
+
+                <h3 className="text-2xl font-black uppercase text-white">
+                  Step {activePipelineStep + 1} Pipeline Execution
+                </h3>
+
+                <p className="text-slate-300 text-sm leading-relaxed bg-slate-950 p-6 rounded-2xl border border-cyan-500/20">
+                  Every inbound request passes through our stateless microservice cluster. High-entropy payloads triggering heuristic flags are routed to Groq and DeepSeek V3 in parallel to achieve a sub-140ms quorum decision.
                 </p>
-              </div>
 
-              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900 border border-cyan-500/30 font-mono text-xs text-cyan-400 shadow-lg">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                </span>
-                <span>SOC Operational Status: ACTIVE</span>
-              </div>
-            </div>
-
-            {/* Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl hover:border-cyan-400/50 transition-all">
-                <div className="text-cyan-400 text-xs font-mono uppercase tracking-wider">Total Scanned Payloads</div>
-                <div className="text-3xl font-black text-white mt-2">1,284</div>
-                <div className="text-emerald-400 text-xs font-mono mt-1">↑ 24.5% vs last hour</div>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl hover:border-rose-500/50 transition-all">
-                <div className="text-rose-400 text-xs font-mono uppercase tracking-wider">Blocked Attack Vectors</div>
-                <div className="text-3xl font-black text-rose-400 mt-2">142</div>
-                <div className="text-slate-400 text-xs font-mono mt-1">11.0% attack ratio</div>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl hover:border-cyan-400/50 transition-all">
-                <div className="text-cyan-400 text-xs font-mono uppercase tracking-wider">Consensus Score</div>
-                <div className="text-3xl font-black text-cyan-400 mt-2">99.4%</div>
-                <div className="text-slate-400 text-xs font-mono mt-1">Groq + DeepSeek aligned</div>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-slate-900/60 border border-cyan-500/20 backdrop-blur-xl hover:border-blue-400/50 transition-all">
-                <div className="text-blue-400 text-xs font-mono uppercase tracking-wider">Active Extension Nodes</div>
-                <div className="text-3xl font-black text-blue-400 mt-2">328</div>
-                <div className="text-slate-400 text-xs font-mono mt-1">Browser clients online</div>
-              </div>
-            </div>
-
-            {/* Dynamic Threat Frequency Chart */}
-            <div className="p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl space-y-6">
-              <div className="flex items-center justify-between font-mono text-xs">
-                <div className="text-white font-bold uppercase flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-cyan-400" /> Vector Threat Frequency (12-Hour Trend)
-                </div>
-                <span className="text-cyan-400 animate-pulse">● Live Analytics Stream</span>
-              </div>
-
-              <div className="grid grid-cols-12 gap-3 h-36 items-end pt-4 border-b border-cyan-500/10 pb-2">
-                {[40, 65, 30, 85, 45, 95, 75, 50, 90, 35, 70, 100].map((val, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group">
-                    <div 
-                      style={{ height: `${val}%` }} 
-                      className="w-full bg-gradient-to-t from-cyan-600 via-blue-500 to-indigo-400 rounded-t-lg group-hover:from-cyan-400 group-hover:to-indigo-300 transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-                    />
-                    <span className="text-[10px] font-mono text-slate-500">{idx * 2}h</span>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 rounded-xl bg-slate-950/60 border border-cyan-500/20">
+                    <span className="text-slate-500 block">Processing Latency</span>
+                    <span className="text-white font-bold text-lg mt-1">&lt; 25ms</span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Intercepted Log Table */}
-            <div className="p-6 rounded-3xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl space-y-4">
-              <div className="flex items-center justify-between font-mono text-xs">
-                <div className="text-white font-bold uppercase flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4 text-rose-400 animate-pulse" /> Intercepted Threat Stream Log
+                  <div className="p-4 rounded-xl bg-slate-950/60 border border-cyan-500/20">
+                    <span className="text-slate-500 block">Policy Enforcement</span>
+                    <span className="text-cyan-400 font-bold text-lg mt-1">Default Deny</span>
+                  </div>
                 </div>
-                <span className="text-slate-500">Auto-Refreshed</span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left font-mono text-xs">
-                  <thead>
-                    <tr className="border-b border-cyan-500/20 text-slate-400">
-                      <th className="py-3 px-4">TIMESTAMP</th>
-                      <th className="py-3 px-4">VECTOR TYPE</th>
-                      <th className="py-3 px-4">PAYLOAD TARGET</th>
-                      <th className="py-3 px-4">VERDICT</th>
-                      <th className="py-3 px-4">RISK SCORE</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-cyan-500/10 text-slate-300">
-                    <tr className="hover:bg-cyan-950/20 transition-colors">
-                      <td className="py-3.5 px-4 text-slate-500">15:28:10 IST</td>
-                      <td className="py-3.5 px-4 text-cyan-400 font-bold">URL / Phishing</td>
-                      <td className="py-3.5 px-4">verify-your-wallet.xyz/login</td>
-                      <td className="py-3.5 px-4 text-rose-400 font-bold flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" /> CRITICAL
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-rose-400">95/100</td>
-                    </tr>
-                    <tr className="hover:bg-cyan-950/20 transition-colors">
-                      <td className="py-3.5 px-4 text-slate-500">15:24:02 IST</td>
-                      <td className="py-3.5 px-4 text-blue-400 font-bold">QR / Quishing</td>
-                      <td className="py-3.5 px-4">bit.ly/claim-free-crypto</td>
-                      <td className="py-3.5 px-4 text-amber-400 font-bold">HIGH RISK</td>
-                      <td className="py-3.5 px-4 font-bold text-amber-400">88/100</td>
-                    </tr>
-                    <tr className="hover:bg-cyan-950/20 transition-colors">
-                      <td className="py-3.5 px-4 text-slate-500">15:19:40 IST</td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-bold">File Checksum</td>
-                      <td className="py-3.5 px-4">e3b0c44298fc1c149afbf4c899...</td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-bold">NOMINAL</td>
-                      <td className="py-3.5 px-4 font-bold text-emerald-400">04/100</td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </div>
           </div>
         )}
 
-        {/* ================= 4. TELEMETRY LOGS ================= */}
-        {activeTab === 'telemetry' && (
-          <div className="max-w-7xl mx-auto px-6 pt-10 space-y-6 animate-in fade-in duration-500">
-            {/* Control Header */}
+        {/* ================= 4. POLICIES ================= */}
+        {activeTab === 'policies' && (
+          <div className="max-w-7xl mx-auto px-6 py-10 space-y-10 animate-in fade-in duration-300 font-mono">
+            <div className="text-center space-y-3">
+              <h1 className="text-4xl font-black uppercase text-white">Security & Governance Policies</h1>
+              <p className="text-slate-400 text-xs uppercase tracking-widest">Enterprise Compliance & Rulebooks</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="space-y-2">
+                {[
+                  { id: 'zerotrust', label: 'Zero Trust Rules', icon: Shield },
+                  { id: 'privacy', label: 'Privacy Policy', icon: Lock },
+                  { id: 'compliance', label: 'SLA & Compliance', icon: FileText },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const active = selectedPolicy === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelectedPolicy(item.id)}
+                      className={`w-full p-4 rounded-2xl border text-left font-bold text-xs uppercase flex items-center gap-3 transition-all ${
+                        active
+                          ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                          : 'bg-slate-900/60 border-cyan-500/20 text-slate-400 hover:text-white hover:border-cyan-400/40'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="lg:col-span-3 p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/30 backdrop-blur-2xl space-y-6">
+                <div className="flex justify-between items-center border-b border-cyan-500/20 pb-4">
+                  <h2 className="text-2xl font-black uppercase text-white">
+                    {selectedPolicy === 'zerotrust' ? 'Zero Trust Architecture Policy' :
+                     selectedPolicy === 'privacy' ? 'Data Protection Policy' : 'SLA Compliance Rules'}
+                  </h2>
+                  <span className="text-xs text-slate-500">Updated: June 2026</span>
+                </div>
+
+                <div className="space-y-4 text-xs">
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-cyan-500/10 space-y-2">
+                    <h3 className="text-cyan-400 font-bold uppercase">1. Default-Deny Protocol</h3>
+                    <p className="text-slate-300 leading-relaxed">
+                      Every network connection, incoming link, or file upload is treated as untrusted by default. Content is never allowed to execute or render on the user's browser without explicit validation by the consensus engine.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-cyan-500/10 space-y-2">
+                    <h3 className="text-cyan-400 font-bold uppercase">2. Zero-Retention Telemetry</h3>
+                    <p className="text-slate-300 leading-relaxed">
+                      URL parameters containing sensitive query tokens (e.g., passkeys, session tokens, JWTs) are automatically stripped before logging telemetry to our database.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= 5. DASHBOARD ================= */}
+        {activeTab === 'dashboard' && (
+          <div className="max-w-7xl mx-auto px-6 py-10 space-y-8 animate-in fade-in duration-300 font-mono">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-6">
               <div>
-                <h2 className="text-3xl font-black uppercase text-white tracking-tight drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-                  System Telemetry Log
+                <h2 className="text-3xl font-black uppercase text-white tracking-tight flex items-center gap-3">
+                  <BarChart3 className="h-8 w-8 text-cyan-400" />
+                  Security Operations Center (SOC)
                 </h2>
-                <p className="text-slate-400 font-mono text-xs uppercase mt-1">
-                  Real-time event stream connected to ZeroTrust core gateway
+                <p className="text-slate-400 text-xs uppercase mt-1">
+                  Global threat surface telemetry & multi-LLM consensus matrix
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Type Filter dropdown */}
-                <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-cyan-500/30 text-xs font-mono">
+              <div className="px-4 py-2 rounded-2xl bg-slate-900 border border-cyan-500/30 text-cyan-400 text-xs flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <span>Node Matrix: NOMINAL</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-6 rounded-3xl bg-slate-900/70 border border-cyan-500/20 backdrop-blur-xl hover:border-cyan-400/40 transition-all">
+                <div className="text-cyan-400 text-xs uppercase font-bold">24H Inspected Payloads</div>
+                <div className="text-3xl font-black text-white mt-2 font-mono">14,290</div>
+                <div className="text-emerald-400 text-xs mt-1 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" /> +18.2% vs previous period
+                </div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-slate-900/70 border border-cyan-500/20 backdrop-blur-xl hover:border-rose-500/40 transition-all">
+                <div className="text-rose-400 text-xs uppercase font-bold">Blocked Threat Vectors</div>
+                <div className="text-3xl font-black text-rose-400 mt-2 font-mono">1,042</div>
+                <div className="text-slate-400 text-xs mt-1">7.2% overall risk score</div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-slate-900/70 border border-cyan-500/20 backdrop-blur-xl hover:border-cyan-400/40 transition-all">
+                <div className="text-cyan-400 text-xs uppercase font-bold">Consensus Precision</div>
+                <div className="text-3xl font-black text-cyan-400 mt-2 font-mono">99.8%</div>
+                <div className="text-slate-400 text-xs mt-1">3 LLM Quorum Agreement</div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-slate-900/70 border border-cyan-500/20 backdrop-blur-xl hover:border-blue-400/40 transition-all">
+                <div className="text-blue-400 text-xs uppercase font-bold">Active Endpoint Extensions</div>
+                <div className="text-3xl font-black text-blue-400 mt-2 font-mono">842</div>
+                <div className="text-slate-400 text-xs mt-1">Connected Chrome Nodes</div>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl space-y-6">
+              <div className="flex items-center justify-between text-xs">
+                <div className="text-white font-bold uppercase flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-cyan-400" /> Hourly Threat Vector Volume Distribution
+                </div>
+                <span className="text-cyan-400 animate-pulse">● Live Analytics Sync</span>
+              </div>
+
+              <div className="grid grid-cols-12 gap-3 h-40 items-end pt-4 border-b border-cyan-500/10 pb-2">
+                {[35, 50, 25, 80, 45, 90, 65, 40, 85, 30, 75, 95].map((height, idx) => (
+                  <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group">
+                    <div 
+                      style={{ height: `${height}%` }}
+                      className="w-full bg-gradient-to-t from-cyan-600 via-blue-500 to-indigo-400 rounded-t-lg group-hover:from-cyan-400 group-hover:to-indigo-300 transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
+                    />
+                    <span className="text-[10px] text-slate-500">{(idx * 2).toString().padStart(2, '0')}:00</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= 6. TELEMETRY ================= */}
+        {activeTab === 'telemetry' && (
+          <div className="max-w-7xl mx-auto px-6 py-10 space-y-6 animate-in fade-in duration-300 font-mono">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-cyan-500/20 pb-6">
+              <div>
+                <h2 className="text-3xl font-black uppercase tracking-tight text-white flex items-center gap-3">
+                  <Terminal className="h-8 w-8 text-cyan-400" />
+                  Live System Telemetry Stream
+                </h2>
+                <p className="text-slate-400 text-xs uppercase mt-1">
+                  Real-time event pipe, microservice status, and consensus inspect
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <div className="flex items-center gap-2 bg-slate-900 border border-cyan-500/30 px-3 py-2 rounded-xl">
                   <Filter className="h-3.5 w-3.5 text-cyan-400" />
-                  <select 
-                    value={logFilter}
-                    onChange={(e) => setLogFilter(e.target.value)}
-                    className="bg-transparent text-cyan-300 focus:outline-none uppercase font-bold"
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="bg-transparent text-cyan-300 font-bold focus:outline-none uppercase"
                   >
                     <option value="ALL">All Types</option>
                     <option value="SYS">SYS</option>
@@ -650,108 +672,153 @@ export default function App() {
                   </select>
                 </div>
 
-                {/* Pause/Resume Stream */}
                 <button
                   onClick={() => setIsStreaming(!isStreaming)}
-                  className={`px-4 py-2 rounded-xl border font-mono text-xs font-bold uppercase transition-all flex items-center gap-2 ${
-                    isStreaming 
-                      ? 'bg-amber-950/40 border-amber-500/40 text-amber-300 hover:bg-amber-900/50' 
-                      : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50'
+                  className={`px-4 py-2 rounded-xl border font-bold uppercase transition-all flex items-center gap-2 ${
+                    isStreaming ? 'bg-amber-950/40 border-amber-500/40 text-amber-300' : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
                   }`}
                 >
                   {isStreaming ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                  <span>{isStreaming ? 'Pause Stream' : 'Resume Stream'}</span>
+                  <span>{isStreaming ? 'Pause' : 'Stream'}</span>
                 </button>
 
-                {/* Clear Console */}
                 <button
-                  onClick={() => setTelemetryLogs([{ id: Date.now(), time: new Date().toLocaleTimeString('en-US', { hour12: false }), type: 'SYS', msg: 'Terminal log buffer cleared manually.' }])}
-                  className="px-4 py-2 rounded-xl bg-slate-900 border border-cyan-500/30 text-slate-300 font-mono text-xs hover:text-white hover:border-cyan-400 transition-all flex items-center gap-2"
+                  onClick={() => setTelemetryLogs([])}
+                  className="p-2 rounded-xl bg-slate-900 border border-cyan-500/30 text-slate-400 hover:text-rose-400 transition-all"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-cyan-400" />
-                  <span>Clear Console</span>
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            {/* Sidebar + Main Terminal Console Split */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Left Column: System Status Cards */}
               <div className="space-y-4">
-                <div className="p-5 rounded-3xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl space-y-3">
-                  <div className="text-cyan-400 text-xs font-mono uppercase font-bold flex items-center gap-2">
-                    <Server className="h-4 w-4" /> Core Gateway Target
+                <div className="p-5 rounded-3xl bg-slate-900/70 border border-cyan-500/20 backdrop-blur-xl space-y-3">
+                  <div className="text-cyan-400 text-xs font-bold uppercase flex items-center gap-2">
+                    <Server className="h-4 w-4" /> Active Services
                   </div>
-                  <div className="font-mono text-xs text-white bg-slate-950 p-3 rounded-xl border border-cyan-500/20 break-all">
-                    cyber-champ-2.onrender.com
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
-                    <span>Protocol: HTTPS/WSS</span>
-                    <span className="text-emerald-400 font-bold">200 OK</span>
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-3xl bg-slate-900/80 border border-cyan-500/20 backdrop-blur-xl space-y-3">
-                  <div className="text-cyan-400 text-xs font-mono uppercase font-bold flex items-center gap-2">
-                    <Cpu className="h-4 w-4" /> Multi-LLM Consensus Workers
-                  </div>
-                  <div className="space-y-2 font-mono text-xs">
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-cyan-500/10">
-                      <span className="text-slate-300">Groq (Llama-3)</span>
-                      <span className="text-emerald-400 font-bold text-[10px]">READY (14ms)</span>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center p-2 rounded-xl bg-slate-950 border border-cyan-500/10">
+                      <span className="text-slate-300">FastAPI Gateway</span>
+                      <span className="text-emerald-400 font-bold">100%</span>
                     </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-cyan-500/10">
-                      <span className="text-slate-300">DeepSeek V3</span>
-                      <span className="text-emerald-400 font-bold text-[10px]">READY (28ms)</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-cyan-500/10">
-                      <span className="text-slate-300">Gemini 1.5 Flash</span>
-                      <span className="text-emerald-400 font-bold text-[10px]">READY (18ms)</span>
+                    <div className="flex justify-between items-center p-2 rounded-xl bg-slate-950 border border-cyan-500/10">
+                      <span className="text-slate-300">Consensus Engine</span>
+                      <span className="text-emerald-400 font-bold">READY</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Dynamic Terminal Container */}
-              <div className="lg:col-span-3 p-6 rounded-3xl bg-slate-950 border border-cyan-500/30 shadow-2xl font-mono text-xs space-y-4 relative min-h-[480px] flex flex-col justify-between">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 text-slate-500">
+              <div className="lg:col-span-3 p-6 rounded-3xl bg-slate-950 border border-cyan-500/30 shadow-2xl text-xs flex flex-col h-[500px]">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 text-slate-500">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
                     <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
                     <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                    <span className="ml-2 text-slate-300 font-bold">zerotrust-event-stream.sh</span>
+                    <span className="ml-2 text-slate-300 font-bold">zerotrust-event-daemon.service</span>
                   </div>
-                  <div className="flex items-center gap-2 text-cyan-400">
-                    <Radio className="h-3.5 w-3.5 animate-pulse" />
-                    <span className="text-[11px]">{isStreaming ? 'LIVE STREAM' : 'PAUSED'}</span>
-                  </div>
+                  <span className="text-cyan-400 font-bold">{isStreaming ? 'STREAMING' : 'PAUSED'}</span>
                 </div>
 
-                {/* Log Rows Stream */}
-                <div className="space-y-3 overflow-y-auto max-h-[360px] pr-2 flex-1">
-                  {filteredLogs.map((log) => (
-                    <div key={log.id} className="flex items-start gap-3 animate-in slide-in-from-left-2 duration-200">
-                      <span className="text-slate-600 shrink-0">[{log.time}]</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                        log.type === 'SYS' ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/30' :
-                        log.type === 'NET' ? 'bg-blue-950 text-blue-400 border border-blue-500/30' :
-                        log.type === 'WARN' ? 'bg-amber-950 text-amber-300 border border-amber-500/30' :
-                        log.type === 'POL' ? 'bg-indigo-950 text-indigo-300 border border-indigo-500/30' :
-                        'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
-                      }`}>
-                        {log.type}
-                      </span>
-                      <span className="text-slate-200 leading-relaxed">{log.msg}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Blinking Cursor Prompt */}
-                <div className="pt-3 border-t border-slate-800 flex items-center gap-2 text-cyan-400 font-bold">
-                  <span>sys_root@zerotrust-telemetry:~$</span>
-                  <span className="w-2 h-4 bg-cyan-400 inline-block animate-pulse" />
+                <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                  {telemetryLogs
+                    .filter(log => filterType === 'ALL' || log.type === filterType)
+                    .map((log) => (
+                      <div key={log.id} className="flex items-start gap-3 p-1.5 rounded hover:bg-cyan-950/30 transition-colors">
+                        <span className="text-slate-600 font-bold">[{log.timestamp}]</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+                          {log.type}
+                        </span>
+                        <span className="text-slate-500 uppercase font-bold">[{log.subsystem}]</span>
+                        <span className="text-slate-200">{log.message}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= 7. SIGN IN / AUTH ================= */}
+        {activeTab === 'auth' && (
+          <div className="max-w-md mx-auto px-6 py-16 font-mono animate-in fade-in duration-300">
+            <div className="p-8 rounded-3xl bg-slate-900/80 border border-cyan-500/30 backdrop-blur-2xl space-y-6 shadow-2xl">
+              {isLoggedIn ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-cyan-500/20 pb-4">
+                    <div>
+                      <span className="text-xs text-cyan-400 font-bold uppercase">Authenticated User</span>
+                      <h2 className="text-xl font-black uppercase text-white mt-1">{authEmail}</h2>
+                    </div>
+                    <button
+                      onClick={() => setIsLoggedIn(false)}
+                      className="px-3 py-1.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs uppercase"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-cyan-500/20 text-xs text-cyan-300 space-y-2">
+                    <span className="text-slate-500 block uppercase">API Key</span>
+                    <code className="block text-white">zt_live_99482a0b12c8e411fa793012</code>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center space-y-2">
+                    <div className="p-3 w-fit mx-auto rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-400/30">
+                      <Shield className="h-6 w-6" />
+                    </div>
+                    <h2 className="text-2xl font-black uppercase text-white">
+                      {isSignUp ? 'Create SOC Account' : 'Portal Sign In'}
+                    </h2>
+                    <p className="text-slate-400 text-xs">Enter credentials to manage security keys</p>
+                  </div>
+
+                  <form onSubmit={(e) => { e.preventDefault(); if (authEmail && authPassword) setIsLoggedIn(true); }} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-slate-400 text-[11px] uppercase font-bold">Work Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        placeholder="analyst@enterprise.com"
+                        className="w-full bg-slate-950 border border-cyan-500/30 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-400 text-[11px] uppercase font-bold">Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-slate-950 border border-cyan-500/30 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-white font-bold text-xs uppercase transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-300/40"
+                    >
+                      {isSignUp ? 'Register Account' : 'Authenticate'}
+                    </button>
+                  </form>
+
+                  <div className="text-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsSignUp(!isSignUp)}
+                      className="text-slate-400 hover:text-cyan-400 text-xs"
+                    >
+                      {isSignUp ? 'Already have an account? Sign in' : "Don't have access? Request account"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
