@@ -31,7 +31,7 @@ export default function Scanner() {
     if (mode === 'qrcode') payloadText = `[QR_CODE_RAW_DATA]: ${input}`;
 
     try {
-      const response = await fetch('https://comp-app-0k3a.onrender.com/scan', {
+      const response = await fetch('https://cyber-champ-2.onrender.com/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload: payloadText }),
