@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Download, LayoutDashboard, Radar, Activity, Star } from 'lucide-react';
+import { Shield, Download, LayoutDashboard, Radar, Activity, Home } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: string;
@@ -17,7 +17,7 @@ export default function Navbar({ activeTab, setActiveTab }: NavbarProps) {
         {/* Cyber Brand Logo */}
         <div 
           className="flex items-center gap-3 cursor-pointer group" 
-          onClick={() => setActiveTab('scanner')}
+          onClick={() => setActiveTab('home')}
         >
           <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-400 group-hover:border-cyan-300 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all">
             <Shield className="h-5 w-5" />
@@ -29,6 +29,17 @@ export default function Navbar({ activeTab, setActiveTab }: NavbarProps) {
 
         {/* Navigation Bar */}
         <div className="hidden md:flex items-center gap-1 p-1 bg-slate-900/90 border border-cyan-500/20 rounded-xl shadow-inner shadow-cyan-950/50">
+          <button
+            onClick={() => setActiveTab('home')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-mono uppercase transition-all flex items-center gap-2 ${
+              activeTab === 'home' 
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-300/40' 
+                : 'text-slate-400 hover:text-cyan-300 hover:bg-cyan-950/40'
+            }`}
+          >
+            <Home className="h-3.5 w-3.5" />
+            Home
+          </button>
           <button
             onClick={() => setActiveTab('scanner')}
             className={`px-4 py-1.5 rounded-lg text-xs font-mono uppercase transition-all flex items-center gap-2 ${
